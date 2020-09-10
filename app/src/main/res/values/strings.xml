@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Gas Points</string>
+    <string name="enter_barcode_text">Enter Barcode Text</string>
+
+        <string-array name="points_card_type">
+            <item>Petro Canada</item>
+            <item>Esso</item>
+            <item>Shell</item>
+            <item>Canadian Tire</item>
+            <item>Ultramar</item>
+        </string-array>
+
+</resources>
+

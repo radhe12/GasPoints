@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+
+    <color name="petroColor">#ff3333</color>
+    <color name="shellColor">#ffcc00</color>
+    <color name="essoColor">#ff9933</color>
+    <color name="ctColor">#000</color>
+    <color name="ultramarColor">#3700B3</color>
+
+    <color name="textColor">#fff</color>
+
+</resources>
