@@ -41,6 +41,13 @@ class MainActivity : AppCompatActivity(), CardsRecyclerAdapter.OnPointCardListen
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == RESULT_OK) {
+            getAllPointsCard()
+        }
+    }
+
     private fun getAllPointsCard(){
         pointCardRepository.retrieveCardsTask().observe(this,
             { cards ->

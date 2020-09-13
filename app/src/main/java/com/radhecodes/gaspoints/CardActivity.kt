@@ -12,19 +12,21 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.radhecodes.gaspoints.async.OnTaskFinish
 import com.radhecodes.gaspoints.model.PointCard
 import com.radhecodes.gaspoints.persistence.PointCardRepository
 import kotlinx.android.synthetic.main.activity_card.*
 import kotlinx.android.synthetic.main.points_card_toolbar.*
 
-class CardActivity : AppCompatActivity() {
+class CardActivity : AppCompatActivity(), OnTaskFinish {
 
     private val initialMode: Int  = 0
     private val viewMode: Int = 1
     private val editMode: Int = 2
     private var currentMode: Int? = null
+    private lateinit var initialPointCard: PointCard
     lateinit var selectedPointCard: String
-    lateinit var pointCard: PointCard
+    private var selectedPointCardId: Long = 0
     private lateinit var pointCardRepository: PointCardRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,11 +57,11 @@ class CardActivity : AppCompatActivity() {
             pc_type.adapter = adapter
         }
 
-        val id = intent.getLongExtra("view_id", 0)
-        if(id == 0L)
+        selectedPointCardId = intent.getLongExtra("view_id", 0)
+        if(selectedPointCardId == 0L)
             inInitialMode()
         else
-            inViewMode(id)
+            inViewMode(selectedPointCardId)
 
         edit_button.setOnClickListener {
             inEditMode()
@@ -68,9 +70,25 @@ class CardActivity : AppCompatActivity() {
 
         generate_card.setOnClickListener {
             if(barcode_text.length() != 0) {
-                pointCard = PointCard(selectedPointCard, barcode_text.text.toString())
-                pointCardRepository.insertCardTask(pointCard)
+                initialPointCard = PointCard(selectedPointCard, barcode_text.text.toString())
+                if(currentMode == initialMode) {
+                    pointCardRepository.insertCardTask(initialPointCard, this)
+                }
+                if(currentMode == editMode) {
+                    initialPointCard.id = selectedPointCardId
+                    pointCardRepository.updateCardTask(initialPointCard, this)
+                }
             }
+        }
+
+        delete_button.setOnClickListener {
+            initialPointCard.id = selectedPointCardId
+            pointCardRepository.deleteCardTask(initialPointCard, this)
+        }
+
+        edit_button.setOnClickListener {
+            if(selectedPointCardId != 0L)
+                inEditMode()
         }
     }
 
@@ -88,7 +106,7 @@ class CardActivity : AppCompatActivity() {
         delete_button.visibility = VISIBLE
 
         barcode_text.setText("")
-        edit_view.visibility = GONE
+        edit_layout.visibility = GONE
         view_layout.visibility = VISIBLE
         getCardView(id)
         currentMode = viewMode
@@ -97,7 +115,12 @@ class CardActivity : AppCompatActivity() {
     private fun inEditMode() {
         edit_button.visibility = GONE
         delete_button.visibility = GONE
+
+        edit_layout.visibility = VISIBLE
+        view_layout.visibility = GONE
+
         generate_card.text = "Update Card"
+        getCardInEditView(selectedPointCardId)
         currentMode = editMode
     }
 
@@ -109,9 +132,23 @@ class CardActivity : AppCompatActivity() {
             })
     }
 
-    private fun cardViewSetup(pointCard: PointCard) {
-        card_name_view.text = pointCard.pointCardType
+    private fun getCardInEditView(id: Long){
+        pointCardRepository.retrieveCardByIdTask(id).observe(this,
+            { card ->
+                if (card != null)
+                    cardEditModeSetup(card)
+            })
+    }
 
+    private fun cardEditModeSetup(pointCard: PointCard) {
+        barcode_text.setText(pointCard.barcodeData)
+        val pos = resources.getStringArray(R.array.points_card_type).indexOf(pointCard.pointCardType)
+        pc_type.setSelection(pos)
+    }
+
+    private fun cardViewSetup(pointCard: PointCard) {
+        initialPointCard = PointCard(pointCard.pointCardType, pointCard.barcodeData)
+        card_name_view.text = pointCard.pointCardType
         card_in_view_mode.setCardBackgroundColor(getColorCode(pointCard.pointCardType))
         generateQRCode(pointCard.barcodeData)
     }
@@ -149,5 +186,34 @@ class CardActivity : AppCompatActivity() {
         }
     }
 
+    override fun onInsertFinish(id: Long?) {
+     if(id != 0L)
+         insertSuccess(id)
+     else
+         Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
+    }
+
+    override fun onUpdateFinish() {
+        Toast.makeText(this, "Card Updated", Toast.LENGTH_LONG).show()
+        barcode_text.setText("")
+        inViewMode(selectedPointCardId)
+    }
+
+    override fun onDeleteSuccess() {
+        Toast.makeText(this, "Card Deleted", Toast.LENGTH_LONG).show()
+        val intent = intent
+        intent.putExtra("isDeleted", true)
+        setResult(RESULT_OK, intent)
+        finish()
+    }
+
+    private fun insertSuccess(id: Long?) {
+        Toast.makeText(this, "Card Added", Toast.LENGTH_LONG).show()
+        barcode_text.setText("")
+        if (id != null) {
+            inViewMode(id)
+            selectedPointCardId = id
+        }
+    }
 
 }

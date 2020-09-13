@@ -33,7 +33,7 @@ public final class PointCardDao_Impl implements PointCardDao {
     this.__insertionAdapterOfPointCard = new EntityInsertionAdapter<PointCard>(__db) {
       @Override
       public String createQuery() {
-        return "INSERT OR ABORT INTO `pointcards` (`id`,`pointscardtype`,`barcodedata`) VALUES (nullif(?, 0),?,?)";
+        return "INSERT OR IGNORE INTO `pointcards` (`id`,`pointscardtype`,`barcodedata`) VALUES (nullif(?, 0),?,?)";
       }
 
       @Override
@@ -65,7 +65,7 @@ public final class PointCardDao_Impl implements PointCardDao {
     this.__updateAdapterOfPointCard = new EntityDeletionOrUpdateAdapter<PointCard>(__db) {
       @Override
       public String createQuery() {
-        return "UPDATE OR ABORT `pointcards` SET `id` = ?,`pointscardtype` = ?,`barcodedata` = ? WHERE `id` = ?";
+        return "UPDATE OR REPLACE `pointcards` SET `id` = ?,`pointscardtype` = ?,`barcodedata` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -100,14 +100,12 @@ public final class PointCardDao_Impl implements PointCardDao {
   }
 
   @Override
-  public int deleteCard(final PointCard pointCard) {
+  public void deleteCard(final PointCard pointCard) {
     __db.assertNotSuspendingTransaction();
-    int _total = 0;
     __db.beginTransaction();
     try {
-      _total +=__deletionAdapterOfPointCard.handle(pointCard);
+      __deletionAdapterOfPointCard.handle(pointCard);
       __db.setTransactionSuccessful();
-      return _total;
     } finally {
       __db.endTransaction();
     }
