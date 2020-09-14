@@ -30,28 +30,30 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <Spinner
+
+        <androidx.appcompat.widget.AppCompatSpinner
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
-            android:id="@+id/pc_type"
-            />
+            android:id="@+id/pc_type" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/barcode_text_input_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp">
 
         <androidx.appcompat.widget.AppCompatEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="16sp"
+            android:maxLines="1"
+            android:imeOptions="actionDone"
             android:maxLength="20"
             android:id="@+id/barcode_text"
-            android:layout_marginTop="100dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
             android:hint="@string/enter_barcode_text"/>
 
         </com.google.android.material.textfield.TextInputLayout>

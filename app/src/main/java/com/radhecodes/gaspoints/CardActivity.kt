@@ -3,11 +3,14 @@ package com.radhecodes.gaspoints
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.inputmethod.EditorInfo
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.TextView.OnEditorActionListener
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.BarcodeFormat
@@ -69,17 +72,17 @@ class CardActivity : AppCompatActivity(), OnTaskFinish {
         }
 
         generate_card.setOnClickListener {
-            if(barcode_text.length() != 0) {
-                initialPointCard = PointCard(selectedPointCard, barcode_text.text.toString())
-                if(currentMode == initialMode) {
-                    pointCardRepository.insertCardTask(initialPointCard, this)
-                }
-                if(currentMode == editMode) {
-                    initialPointCard.id = selectedPointCardId
-                    pointCardRepository.updateCardTask(initialPointCard, this)
-                }
-            }
+            generateButtonClicked()
         }
+
+        barcode_text.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+            var handled = false
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                generateButtonClicked()
+                handled = true
+            }
+            handled
+        })
 
         delete_button.setOnClickListener {
             initialPointCard.id = selectedPointCardId
@@ -90,6 +93,51 @@ class CardActivity : AppCompatActivity(), OnTaskFinish {
             if(selectedPointCardId != 0L)
                 inEditMode()
         }
+
+        back_button.setOnClickListener {
+            backClick()
+        }
+
+    }
+
+    private fun generateButtonClicked() {
+        if(barcode_text.length() != 0) {
+            initialPointCard = PointCard(selectedPointCard, barcode_text.text.toString())
+            if(currentMode == initialMode) {
+                pointCardRepository.insertCardTask(initialPointCard, this)
+            }
+            if(currentMode == editMode) {
+                initialPointCard.id = selectedPointCardId
+                pointCardRepository.updateCardTask(initialPointCard, this)
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+        super.onSaveInstanceState(outState, outPersistentState)
+        currentMode?.let { outState.putInt("mode", it) }
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        currentMode = savedInstanceState.getInt("mode")
+
+        if(currentMode == editMode)
+            inEditMode()
+    }
+
+    private fun backClick() {
+        if(currentMode == viewMode || currentMode == initialMode)
+            finish()
+        else
+            inViewMode(selectedPointCardId)
+    }
+
+    override fun onBackPressed() {
+        if(currentMode == editMode)
+            backClick()
+        else
+            super.onBackPressed()
     }
 
     private fun inInitialMode() {
