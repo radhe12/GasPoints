@@ -10,7 +10,6 @@ class PointCardRepository(context: Context) {
     private val pointCardDatabase: PointCardDatabase = PointCardDatabase.getDatabase(context)
 
     suspend fun insertCardTask(pointCard: PointCard): Long {
-      //  InsertAsyncTask(pointCardDatabase.pointCardDao()).execute(pointCard)
         return pointCardDatabase.pointCardDao().insertCard(pointCard)
     }
 
