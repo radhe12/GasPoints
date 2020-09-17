@@ -15,13 +15,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import com.radhecodes.gaspoints.async.OnTaskFinish
 import com.radhecodes.gaspoints.model.PointCard
 import com.radhecodes.gaspoints.persistence.PointCardRepository
 import kotlinx.android.synthetic.main.activity_card.*
 import kotlinx.android.synthetic.main.points_card_toolbar.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 
-class CardActivity : AppCompatActivity(), OnTaskFinish {
+class CardActivity : AppCompatActivity() {
 
     private val initialMode: Int  = 0
     private val viewMode: Int = 1
@@ -85,8 +87,11 @@ class CardActivity : AppCompatActivity(), OnTaskFinish {
         })
 
         delete_button.setOnClickListener {
-            initialPointCard.id = selectedPointCardId
-            pointCardRepository.deleteCardTask(initialPointCard, this)
+            CoroutineScope(IO).launch {
+                initialPointCard.id = selectedPointCardId
+                val result = pointCardRepository.deleteCardTask(initialPointCard)
+                onDeleteSuccess(result)
+            }
         }
 
         edit_button.setOnClickListener {
@@ -104,11 +109,17 @@ class CardActivity : AppCompatActivity(), OnTaskFinish {
         if(barcode_text.length() != 0) {
             initialPointCard = PointCard(selectedPointCard, barcode_text.text.toString())
             if(currentMode == initialMode) {
-                pointCardRepository.insertCardTask(initialPointCard, this)
+                CoroutineScope(IO).launch {
+                    val id = pointCardRepository.insertCardTask(initialPointCard)
+                    onInsertFinish(id)
+                }
             }
             if(currentMode == editMode) {
-                initialPointCard.id = selectedPointCardId
-                pointCardRepository.updateCardTask(initialPointCard, this)
+                CoroutineScope(IO).launch {
+                    initialPointCard.id = selectedPointCardId
+                    val result = pointCardRepository.updateCardTask(initialPointCard)
+                    onUpdateFinish(result)
+                }
             }
         }
     }
@@ -234,34 +245,50 @@ class CardActivity : AppCompatActivity(), OnTaskFinish {
         }
     }
 
-    override fun onInsertFinish(id: Long?) {
-     if(id != 0L)
-         insertSuccess(id)
-     else
-         Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
-    }
-
-    override fun onUpdateFinish() {
-        Toast.makeText(this, "Card Updated", Toast.LENGTH_LONG).show()
-        barcode_text.setText("")
-        inViewMode(selectedPointCardId)
-    }
-
-    override fun onDeleteSuccess() {
-        Toast.makeText(this, "Card Deleted", Toast.LENGTH_LONG).show()
-        val intent = intent
-        intent.putExtra("isDeleted", true)
-        setResult(RESULT_OK, intent)
-        finish()
-    }
-
-    private fun insertSuccess(id: Long?) {
-        Toast.makeText(this, "Card Added", Toast.LENGTH_LONG).show()
-        barcode_text.setText("")
-        if (id != null) {
-            inViewMode(id)
-            selectedPointCardId = id
+    private suspend fun onInsertFinish(id: Long?) {
+        withContext(Main) {
+            if(id != 0L) {
+                Toast.makeText(this@CardActivity, "Card Added", Toast.LENGTH_LONG).show()
+                barcode_text.setText("")
+                if (id != null) {
+                    inViewMode(id)
+                    selectedPointCardId = id
+                }
+            }
+            else
+                Toast.makeText(this@CardActivity, "Something went wrong", Toast.LENGTH_LONG).show()
         }
+    }
+
+     private suspend fun onUpdateFinish(result: Int) {
+             withContext(Main) {
+                 if(result != -1) {
+                 Toast.makeText(this@CardActivity, "Card Updated", Toast.LENGTH_LONG).show()
+                 barcode_text.setText("")
+                 inViewMode(selectedPointCardId)
+                 }
+                 else
+                     Toast.makeText(this@CardActivity, "Something went wrong", Toast.LENGTH_LONG).show()
+             }
+     }
+
+     private suspend fun onDeleteSuccess(result: Int) {
+        withContext(Main) {
+            if(result != -1) {
+                Toast.makeText(this@CardActivity, "Card Deleted", Toast.LENGTH_LONG).show()
+                val intent = intent
+                 intent.putExtra("isDeleted", true)
+                 setResult(RESULT_OK, intent)
+                 finish()
+             }
+            else
+                Toast.makeText(this@CardActivity, "Something went wrong", Toast.LENGTH_LONG).show()
+        }
+     }
+
+
+    private suspend fun insertSuccess(id: Long?) {
+
     }
 
 }

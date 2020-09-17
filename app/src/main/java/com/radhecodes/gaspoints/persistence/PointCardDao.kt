@@ -8,13 +8,13 @@ import com.radhecodes.gaspoints.model.PointCard
 interface PointCardDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertCard(pointCard: PointCard) : Long
+    suspend fun insertCard(pointCard: PointCard): Long
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    fun updateCard(pointCard: PointCard) : Int
+    suspend fun updateCard(pointCard: PointCard): Int
 
     @Delete
-    fun deleteCard(pointCard: PointCard)
+    suspend fun deleteCard(pointCard: PointCard): Int
 
     @Query("SELECT * FROM pointcards")
     fun getAllCard() : LiveData<List<PointCard>>
